@@ -1,0 +1,67 @@
+admin:
+  address:
+    socket_address:
+      protocol: TCP
+      address: 127.0.0.1
+      port_value: 9901
+
+static_resources:
+  listeners:
+    - name: listener
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 10000 }
+      filter_chains:
+      - filters:
+        - name: envoy.filters.network.http_connection_manager
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+            stat_prefix: ingress_http
+            codec_type: AUTO
+            route_config:
+              name: local_route
+              virtual_hosts:
+              - name: local_service
+                domains: ["*"]
+                routes:
+                - match: { prefix: "/" }
+                  route: { cluster: cluster1 }
+            http_filters:
+#            - name: envoy.filters.http.health_check
+#              typed_config:
+#                "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
+#                pass_through_mode: true
+#                headers:
+#                  - name: :path
+#                    string_match:
+#                      exact: "/ping"
+#                cache_time: 2s
+            - name: envoy.filters.http.router
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: cluster1
+      health_checks:
+        - timeout: 1s
+          interval: 1s
+          unhealthy_threshold: 2
+          healthy_threshold: 1
+          http_health_check:
+            path: /ping
+      connect_timeout: 0.25s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: cluster1
+        endpoints:
+        - lb_endpoints:
+          - endpoint:
+              address:
+                socket_address:
+                  address: service1-1
+                  port_value: 8090
+              health_check_config: {}
+          - endpoint:
+              address:
+                socket_address:
+                  address: service1-2
+                  port_value: 8090
