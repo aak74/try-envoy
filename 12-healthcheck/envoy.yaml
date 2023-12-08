@@ -26,15 +26,6 @@ static_resources:
                 - match: { prefix: "/" }
                   route: { cluster: cluster1 }
             http_filters:
-#            - name: envoy.filters.http.health_check
-#              typed_config:
-#                "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
-#                pass_through_mode: true
-#                headers:
-#                  - name: :path
-#                    string_match:
-#                      exact: "/ping"
-#                cache_time: 2s
             - name: envoy.filters.http.router
               typed_config:
                 "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
